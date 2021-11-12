@@ -10,6 +10,11 @@ export class FinalProject_Base extends Scene {
             'box': new Cube(),
             'ball': new Subdivision_Sphere(4)
         };
+
+        // declare variable for 3rd person camera toggle
+        this.third_person = false;
+
+
         const phong = new defs.Phong_Shader();
         this.materials = {
             plastic: new Material(phong,
@@ -53,12 +58,16 @@ export class FinalProject_Base extends Scene {
         this.key_triggered_button("Map", ["m"], function () {
             // TODO
         });
+        this.new_line();
+
+        // pressing 'c' switches between third and first person camera, we achieve this by toggling the this.third_person variable
+        this.key_triggered_button("Switch Camera View", ["c"], () => this.third_person = !this.third_person)
     }
 
     display(context, program_state) {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            program_state.set_camera(Mat4.translation(-2, -4, -35));
+            program_state.set_camera(Mat4.identity());
         }
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
@@ -72,16 +81,29 @@ export class FinalProject_Base extends Scene {
 
 export class FinalProject_Scene extends FinalProject_Base {
     display(context, program_state) {
+
         super.display(context, program_state);
-        let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(0, 0, -10)).times(Mat4.scale(5, .1, 20));
-        this.shapes.box.draw(context, program_state, model_transform, this.materials.ground);
-        model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(-15, 0, -25)).times(Mat4.scale(10, .1, 5));
-        this.shapes.box.draw(context, program_state, model_transform, this.materials.ground);
-        model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(0, 1, 0)).times(Mat4.scale(1, .5, 2));
-        this.shapes.box.draw(context, program_state, model_transform, this.materials.car);
+
+        // draw the track 
+        let track_transform = Mat4.identity();
+        track_transform = track_transform.times(Mat4.translation(0, 0, -10)).times(Mat4.scale(5, .1, 20));
+        this.shapes.box.draw(context, program_state, track_transform, this.materials.ground);
+        track_transform = Mat4.identity();
+        track_transform = track_transform.times(Mat4.translation(-15, 0, -25)).times(Mat4.scale(10, .1, 5));
+        this.shapes.box.draw(context, program_state, track_transform, this.materials.ground);
+
+        // draw the car
+        let car_transform = Mat4.identity();
+        car_transform = car_transform.times(Mat4.translation(0, 1, 0)).times(Mat4.scale(1, .5, 2));
+        this.shapes.box.draw(context, program_state, car_transform, this.materials.car);
+
+        // attach the camera to the car, attach in first or 
+        //third person depending on the this.third_person variable set
+        if(!this.third_person)
+            program_state.set_camera(car_transform.times(Mat4.translation(0, -4, 0)));
+        else
+            program_state.set_camera(car_transform.times(Mat4.translation(0, -8, -7)));
+
         const t = this.t = program_state.animation_time / 1000;
     }
 }
