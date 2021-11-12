@@ -20,18 +20,26 @@ export class FinalProject_Base extends Scene {
     }
 
     make_control_panel() {
-        this.control_panel.innerHTML += "Dragonfly rotation angle: ";
-        this.live_string(box => {
-            box.textContent = (this.hover ? 0 : (this.t % (2 * Math.PI)).toFixed(2)) + " radians"
+        this.new_line();
+        this.new_line();
+        this.key_triggered_button("Move Forward", ["w"], function () {
+            // TODO
         });
         this.new_line();
-        this.new_line();
-        this.key_triggered_button("Hover dragonfly in place", ["h"], function () {
-            this.hover ^= 1;
+        this.key_triggered_button("Move Backward", ["s"], function () {
+            // TODO
         });
         this.new_line();
-        this.key_triggered_button("Swarm mode", ["m"], function () {
-            this.swarm ^= 1;
+        this.key_triggered_button("Move Left", ["a"], function () {
+            // TODO
+        });
+        this.new_line();
+        this.key_triggered_button("Move Right", ["d"], function () {
+            // TODO
+        });
+        this.new_line();
+        this.key_triggered_button("Headlight On/Off", ["h"], function () {
+            // TODO
         });
     }
 
