@@ -40,6 +40,8 @@ export class FinalProject_Base extends Scene {
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#e8e6e1")}),
             car: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#0000FF")}),
+            wheel: new Material(new defs.Phong_Shader(),
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000")})
         };
     }
 
@@ -134,7 +136,7 @@ export class FinalProject_Scene extends FinalProject_Base {
                 this.velocity += this.natural_decceleration
             
             // apply velocity to position
-            this.position += this.velocity
+            this.position += this.velocity;
         }
 
         // draw the track 
@@ -149,6 +151,20 @@ export class FinalProject_Scene extends FinalProject_Base {
         let car_transform = Mat4.identity();
         car_transform = car_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, .5, 2));
         this.shapes.box.draw(context, program_state, car_transform, this.materials.car);
+
+        //draw the wheels
+        let wheel_1_transform = Mat4.identity();
+        wheel_1_transform = wheel_1_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(-0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_1_transform, this.materials.wheel);
+        let wheel_2_transform = Mat4.identity();
+        wheel_2_transform = wheel_2_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_2_transform, this.materials.wheel);
+        let wheel_3_transform = Mat4.identity();
+        wheel_3_transform = wheel_3_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(-0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_3_transform, this.materials.wheel);
+        let wheel_4_transform = Mat4.identity();
+        wheel_4_transform = wheel_4_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_4_transform, this.materials.wheel);
 
         // attach the camera to the car, attach in first or 
         // third person depending on the this.third_person variable set
