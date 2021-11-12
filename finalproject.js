@@ -14,6 +14,17 @@ export class FinalProject_Base extends Scene {
         // declare variable for 3rd person camera toggle
         this.third_person = false;
 
+        // declare movement variables
+        this.forward = false;
+        this.backward = false;
+        this.left = false;
+        this.right = false;
+        this.acceleration = 0.01
+        this.velocity = 0
+        this.position = 0
+        this.natural_decceleration = 0.005
+        this.timer = 0
+
 
         const phong = new defs.Phong_Shader();
         this.materials = {
@@ -31,9 +42,7 @@ export class FinalProject_Base extends Scene {
     make_control_panel() {
         this.new_line();
         this.new_line();
-        this.key_triggered_button("Move Forward", ["w"], function () {
-            // TODO
-        });
+        this.key_triggered_button("Move Forward", ["ArrowUp"], () => this.forward = true);
         this.new_line();
         this.key_triggered_button("Move Backward", ["s"], function () {
             // TODO
@@ -67,7 +76,7 @@ export class FinalProject_Base extends Scene {
     display(context, program_state) {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            program_state.set_camera(Mat4.identity());
+            program_state.set_camera(Mat4.identity().times(Mat4.translation(0, -4, 0)));
         }
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
@@ -84,6 +93,38 @@ export class FinalProject_Scene extends FinalProject_Base {
 
         super.display(context, program_state);
 
+        const t = this.t = program_state.animation_time / 1000, dt = program_state.animation_delta_time;
+        // physics implementation, we want all our physics to be processed at 
+        // the same intervals so we want to use dt to find a fixed physics framerate
+        // for this demo we will process physics at 50 frames a second
+
+        this.timer += dt
+        if(this.timer > 20)
+        {
+            // process physics within here so physics is processed in fixed intervals
+            this.timer -= 20
+            // apply forward acceleration
+            if(this.forward)
+            {
+                this.forward = false
+                this.velocity += this.acceleration
+            }
+            // apply backward acceleration
+            if(this.backward)
+            {
+                this.backward = false
+                this.velocity -= this.acceleration
+            }
+            // apply natural decceleration
+            if(this.velocity > 0)
+                this.velocity -= this.natural_decceleration
+            else if(this.velocity < 0)
+                this.velocity += this.natural_decceleration
+            
+            // apply velocity to position
+            this.position += this.velocity
+        }
+
         // draw the track 
         let track_transform = Mat4.identity();
         track_transform = track_transform.times(Mat4.translation(0, 0, -10)).times(Mat4.scale(5, .1, 20));
@@ -94,16 +135,17 @@ export class FinalProject_Scene extends FinalProject_Base {
 
         // draw the car
         let car_transform = Mat4.identity();
-        car_transform = car_transform.times(Mat4.translation(0, 1, 0)).times(Mat4.scale(1, .5, 2));
+        car_transform = car_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, .5, 2));
         this.shapes.box.draw(context, program_state, car_transform, this.materials.car);
 
         // attach the camera to the car, attach in first or 
-        //third person depending on the this.third_person variable set
+        // third person depending on the this.third_person variable set
+        /*
         if(!this.third_person)
             program_state.set_camera(car_transform.times(Mat4.translation(0, -4, 0)));
         else
             program_state.set_camera(car_transform.times(Mat4.translation(0, -8, -7)));
+            */
 
-        const t = this.t = program_state.animation_time / 1000;
     }
 }
