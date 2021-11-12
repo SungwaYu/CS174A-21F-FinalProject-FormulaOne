@@ -26,6 +26,10 @@ export class FinalProject_Base extends Scene {
         this.timer = 0
 
 
+        // debug options
+        this.unlock_camera = false;
+
+
         const phong = new defs.Phong_Shader();
         this.materials = {
             plastic: new Material(phong,
@@ -44,9 +48,7 @@ export class FinalProject_Base extends Scene {
         this.new_line();
         this.key_triggered_button("Move Forward", ["ArrowUp"], () => this.forward = true);
         this.new_line();
-        this.key_triggered_button("Move Backward", ["s"], function () {
-            // TODO
-        });
+        this.key_triggered_button("Move Backward", ["ArrowDown"], () => this.backward = true)
         this.new_line();
         this.key_triggered_button("Move Left", ["a"], function () {
             // TODO
@@ -71,6 +73,12 @@ export class FinalProject_Base extends Scene {
 
         // pressing 'c' switches between third and first person camera, we achieve this by toggling the this.third_person variable
         this.key_triggered_button("Switch Camera View", ["c"], () => this.third_person = !this.third_person)
+
+        this.new_line();
+
+        // pressing 'u' locks and unlocks the camera to the car, for debug purposes
+        this.key_triggered_button("[Debug] Unlock Camera", ["u"], () => this.unlock_camera = !this.unlock_camera)
+
     }
 
     display(context, program_state) {
@@ -116,7 +124,11 @@ export class FinalProject_Scene extends FinalProject_Base {
                 this.velocity -= this.acceleration
             }
             // apply natural decceleration
-            if(this.velocity > 0)
+            // set velocity equal to 0 if small enough
+            const epsilon = 0.001
+            if(this.velocity < epsilon && this.velocity > -epsilon)
+                this.velocity = 0;
+            else if(this.velocity > 0)
                 this.velocity -= this.natural_decceleration
             else if(this.velocity < 0)
                 this.velocity += this.natural_decceleration
@@ -140,12 +152,17 @@ export class FinalProject_Scene extends FinalProject_Base {
 
         // attach the camera to the car, attach in first or 
         // third person depending on the this.third_person variable set
-        /*
-        if(!this.third_person)
-            program_state.set_camera(car_transform.times(Mat4.translation(0, -4, 0)));
-        else
-            program_state.set_camera(car_transform.times(Mat4.translation(0, -8, -7)));
-            */
+        let camera_transform = Mat4.identity().times(Mat4.translation(0, 0, -this.position))
+        // set debug option to unloock camera
+        if(!this.unlock_camera)
+        {
+            if(!this.third_person)
+                program_state.set_camera(Mat4.inverse(camera_transform).times(Mat4.translation(0, -2, -1)));
+            else
+                program_state.set_camera(Mat4.inverse(camera_transform
+                    .times(Mat4.rotation(-Math.PI * .15, 1, 0, 0))
+                    .times(Mat4.translation(0, 2, 10))));
+        }
 
     }
 }
