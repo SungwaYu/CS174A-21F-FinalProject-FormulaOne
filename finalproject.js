@@ -1,6 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 const {vec3, vec4, color, hex_color, Mat4, Light, Shape, Material, Shader, Texture, Scene} = tiny;
-const {Triangle, Square, Tetrahedron, Windmill, Cylindrical_Tube, Cube, Subdivision_Sphere} = defs;
+const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere} = defs;
 
 export class FinalProject_Base extends Scene {
     constructor() {
@@ -8,12 +8,26 @@ export class FinalProject_Base extends Scene {
         this.hover = this.swarm = false;
         this.shapes = {
             'box': new Cube(),
-            'ball': new Subdivision_Sphere(4),
-            // 'tree': new Cylindrical_Tube()
+            'ball': new Subdivision_Sphere(4)
         };
 
         // declare variable for 3rd person camera toggle
         this.third_person = false;
+
+        // declare movement variables
+        this.forward = false;
+        this.backward = false;
+        this.left = false;
+        this.right = false;
+        this.acceleration = 0.01
+        this.velocity = 0
+        this.position = 0
+        this.natural_decceleration = 0.005
+        this.timer = 0
+
+
+        // debug options
+        this.unlock_camera = false;
 
 
         const phong = new defs.Phong_Shader();
@@ -24,25 +38,19 @@ export class FinalProject_Base extends Scene {
                 {ambient: .2, diffusivity: .8, specularity: .8, color: color(.9, .5, .9, 1)}),
             ground: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#e8e6e1")}),
-            fence: new Material(new defs.Phong_Shader(),
-                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#8faefd")}),
             car: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#0000FF")}),
-            tree: new Material(new defs.Phong_Shader(),
-                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#38ea32")}),
+            wheel: new Material(new defs.Phong_Shader(),
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000")})
         };
     }
 
     make_control_panel() {
         this.new_line();
         this.new_line();
-        this.key_triggered_button("Move Forward", ["w"], function () {
-            // TODO
-        });
+        this.key_triggered_button("Move Forward", ["ArrowUp"], () => this.forward = true);
         this.new_line();
-        this.key_triggered_button("Move Backward", ["s"], function () {
-            // TODO
-        });
+        this.key_triggered_button("Move Backward", ["ArrowDown"], () => this.backward = true)
         this.new_line();
         this.key_triggered_button("Move Left", ["a"], function () {
             // TODO
@@ -67,17 +75,24 @@ export class FinalProject_Base extends Scene {
 
         // pressing 'c' switches between third and first person camera, we achieve this by toggling the this.third_person variable
         this.key_triggered_button("Switch Camera View", ["c"], () => this.third_person = !this.third_person)
+
+        this.new_line();
+
+        // pressing 'u' locks and unlocks the camera to the car, for debug purposes
+        this.key_triggered_button("[Debug] Unlock Camera", ["u"], () => this.unlock_camera = !this.unlock_camera)
+
     }
 
     display(context, program_state) {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            program_state.set_camera(Mat4.identity());
+            program_state.set_camera(Mat4.identity().times(Mat4.translation(0, -4, 0)));
         }
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
         const t = this.t = program_state.animation_time / 1000;
-        const light_position = vec4(0, 50, 0, 0);
+        const angle = Math.sin(0);  // TODO: Math.sin(t)
+        const light_position = Mat4.rotation(angle, 1, 0, 0).times(vec4(0, -1, 1, 0));
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
     }
 }
@@ -88,42 +103,82 @@ export class FinalProject_Scene extends FinalProject_Base {
 
         super.display(context, program_state);
 
+        const t = this.t = program_state.animation_time / 1000, dt = program_state.animation_delta_time;
+        // physics implementation, we want all our physics to be processed at 
+        // the same intervals so we want to use dt to find a fixed physics framerate
+        // for this demo we will process physics at 50 frames a second
+
+        this.timer += dt
+        if(this.timer > 20)
+        {
+            // process physics within here so physics is processed in fixed intervals
+            this.timer -= 20
+            // apply forward acceleration
+            if(this.forward)
+            {
+                this.forward = false
+                this.velocity += this.acceleration
+            }
+            // apply backward acceleration
+            if(this.backward)
+            {
+                this.backward = false
+                this.velocity -= this.acceleration
+            }
+            // apply natural decceleration
+            // set velocity equal to 0 if small enough
+            const epsilon = 0.001
+            if(this.velocity < epsilon && this.velocity > -epsilon)
+                this.velocity = 0;
+            else if(this.velocity > 0)
+                this.velocity -= this.natural_decceleration
+            else if(this.velocity < 0)
+                this.velocity += this.natural_decceleration
+            
+            // apply velocity to position
+            this.position += this.velocity;
+        }
+
         // draw the track 
         let track_transform = Mat4.identity();
-        track_transform = track_transform.times(Mat4.translation(0, 0, -5)).times(Mat4.scale(5, .1, 20));
+        track_transform = track_transform.times(Mat4.translation(0, 0, -10)).times(Mat4.scale(5, .1, 20));
         this.shapes.box.draw(context, program_state, track_transform, this.materials.ground);
         track_transform = Mat4.identity();
-        track_transform = track_transform.times(Mat4.translation(-15, 0, -20)).times(Mat4.scale(10, .1, 5));
+        track_transform = track_transform.times(Mat4.translation(-15, 0, -25)).times(Mat4.scale(10, .1, 5));
         this.shapes.box.draw(context, program_state, track_transform, this.materials.ground);
-
-        // draw fences
-        let fence_transform = Mat4.identity();
-        fence_transform = fence_transform.times(Mat4.translation(-5, 1, 5)).times(Mat4.scale(.01, 1, 20));
-        this.shapes.box.draw(context, program_state, fence_transform, this.materials.fence);
-        fence_transform = Mat4.identity().times(Mat4.translation(5, 1, 5)).times(Mat4.scale(.01, 1, 30));
-        this.shapes.box.draw(context, program_state, fence_transform, this.materials.fence);
-        fence_transform = Mat4.identity().times(Mat4.translation(-9, 1, -25)).times(Mat4.scale(14, 1, .01));
-        this.shapes.box.draw(context, program_state, fence_transform, this.materials.fence);
-        fence_transform = Mat4.identity().times(Mat4.translation(-14, 1, -15)).times(Mat4.scale(9, 1, .01));
-        this.shapes.box.draw(context, program_state, fence_transform, this.materials.fence);
-
-        // draw trees
-        // let tree_transform = Mat4.identity();
-        // tree_transform = tree_transform.times(Mat4.translation(0, 0, 20)).times(Mat4.scale(1, 5, 1));
-        // this.shapes.tree.draw(context, program_state, tree_transform, this.materials.tree);
 
         // draw the car
         let car_transform = Mat4.identity();
-        car_transform = car_transform.times(Mat4.translation(0, 1, 0)).times(Mat4.scale(1, .5, 2));
+        car_transform = car_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, .5, 2));
         this.shapes.box.draw(context, program_state, car_transform, this.materials.car);
 
-        // attach the camera to the car, attach in first or 
-        //third person depending on the this.third_person variable set
-        if(!this.third_person)
-            program_state.set_camera(car_transform.times(Mat4.translation(0, -4, 0)));
-        else
-            program_state.set_camera(car_transform.times(Mat4.translation(0, -9, -7)));
+        //draw the wheels
+        let wheel_1_transform = Mat4.identity();
+        wheel_1_transform = wheel_1_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(-0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_1_transform, this.materials.wheel);
+        let wheel_2_transform = Mat4.identity();
+        wheel_2_transform = wheel_2_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_2_transform, this.materials.wheel);
+        let wheel_3_transform = Mat4.identity();
+        wheel_3_transform = wheel_3_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(-0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_3_transform, this.materials.wheel);
+        let wheel_4_transform = Mat4.identity();
+        wheel_4_transform = wheel_4_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        this.shapes.ball.draw(context, program_state, wheel_4_transform, this.materials.wheel);
 
-        const t = this.t = program_state.animation_time / 1000;
+        // attach the camera to the car, attach in first or 
+        // third person depending on the this.third_person variable set
+        let camera_transform = Mat4.identity().times(Mat4.translation(0, 0, -this.position))
+        // set debug option to unloock camera
+        if(!this.unlock_camera)
+        {
+            if(!this.third_person)
+                program_state.set_camera(Mat4.inverse(camera_transform).times(Mat4.translation(0, -2, -1)));
+            else
+                program_state.set_camera(Mat4.inverse(camera_transform
+                    .times(Mat4.rotation(-Math.PI * .15, 1, 0, 0))
+                    .times(Mat4.translation(0, 2, 10))));
+        }
+
     }
 }
