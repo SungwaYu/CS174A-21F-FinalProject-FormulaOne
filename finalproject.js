@@ -16,19 +16,26 @@ export class FinalProject_Base extends Scene {
         // declare variable for 3rd person camera toggle
         this.third_person = false;
 
-        // map view default false
+        // declare variable for map view, default false
         this.map_camera = false;
+
+        // declare variable for camera rotation while turning (3rd person)
+        this.camera_left = false;
+        this.camera_right = false;
+        this.camera_acceleration = 0.03;
+        this.camera_velocity = 0;
+        this.camera_position = 0;
 
         // declare movement variables
         this.forward = false;
         this.backward = false;
         this.left = false;
         this.right = false;
-        this.acceleration = 0.03
-        this.velocity = 0
-        this.position = 0
-        this.natural_decceleration = 0.005
-        this.timer = 0
+        this.acceleration = 0.03;
+        this.velocity = 0;
+        this.position = 0;
+        this.natural_decceleration = 0.005;
+        this.timer = 0;
 
 
         // debug options
@@ -57,12 +64,14 @@ export class FinalProject_Base extends Scene {
         this.new_line();
         this.key_triggered_button("Move Backward", ["ArrowDown"], () => this.backward = true)
         this.new_line();
-        this.key_triggered_button("Move Left", ["a"], function () {
-            // TODO
+        this.key_triggered_button("Move Left", ["ArrowLeft"], () => {
+            this.left = true;
+            this.camera_left = true;
         });
         this.new_line();
-        this.key_triggered_button("Move Right", ["d"], function () {
-            // TODO
+        this.key_triggered_button("Move Right", ["ArrowRight"], () => {
+            this.right = true;
+            this.camera_right = true;
         });
         this.new_line();
         this.key_triggered_button("Switch View", ["v"], function () {
@@ -119,27 +128,63 @@ export class FinalProject_Scene extends FinalProject_Base {
             // apply forward acceleration
             if(this.forward)
             {
-                this.forward = false
-                this.velocity += this.acceleration
+                this.forward = false;
+                this.velocity += this.acceleration;
             }
             // apply backward acceleration
             if(this.backward)
             {
-                this.backward = false
-                this.velocity -= this.acceleration
+                this.backward = false;
+                this.velocity -= this.acceleration;
             }
+            // apply camera_left acceleration
+            if(this.camera_left)
+            {
+                this.camera_left = false;
+                this.camera_velocity += this.camera_acceleration;
+            }
+            // apply camera_right acceleration
+            if(this.camera_right)
+            {
+                this.camera_right = false;
+                this.camera_velocity -= this.camera_acceleration;
+            }
+
             // apply natural decceleration
             // set velocity equal to 0 if small enough
             const epsilon = 0.001
             if(this.velocity < epsilon && this.velocity > -epsilon)
                 this.velocity = 0;
             else if(this.velocity > 0)
-                this.velocity -= this.natural_decceleration
+                this.velocity -= this.natural_decceleration;
             else if(this.velocity < 0)
-                this.velocity += this.natural_decceleration
+                this.velocity += this.natural_decceleration;
+
+            // stop camera and rebound to 0
+            if(this.camera_velocity < epsilon && this.camera_velocity > -epsilon)
+            {
+                this.camera_velocity = 0;
+                // rebound camera position to 0
+                if(this.camera_position < epsilon && this.camera_position > -epsilon)
+                    this.camera_position = 0;
+                else if(this.camera_position > 0)
+                    // TODO: bug needed to be fix, -= 0.5* will go back and forth outside of (-epsilon,epsilon)
+                    this.camera_position -= 5.0 * this.natural_decceleration;
+                else if(this.camera_position < 0)
+                    this.camera_position += 5.0 * this.natural_decceleration;
+            }
+            else if(this.camera_velocity > 0)
+                this.camera_velocity -= this.natural_decceleration;
+            else if(this.camera_velocity < 0)
+                this.camera_velocity += this.natural_decceleration;
             
             // apply velocity to position
             this.position += this.velocity;
+            this.camera_position += this.camera_velocity;
+
+            // maximum camera_position: 1.5 TODO: bug - velocity still increasing
+            if(this.camera_position > 1.5) this.camera_position = 1.5;
+            else if(this.camera_position < -1.5) this.camera_position = -1.5;
         }
 
         // draw trackA
@@ -187,6 +232,7 @@ export class FinalProject_Scene extends FinalProject_Base {
                 program_state.set_camera(Mat4.inverse(camera_transform).times(Mat4.translation(0, -2, -1)));
             else
                 program_state.set_camera(Mat4.inverse(camera_transform
+                    .times(Mat4.rotation(-Math.PI * .1 * this.camera_position, 0, 1, 0))
                     .times(Mat4.rotation(-Math.PI * .05, 1, 0, 0))
                     .times(Mat4.translation(0, 2, 10))));
         }
