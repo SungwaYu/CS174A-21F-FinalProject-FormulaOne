@@ -2,6 +2,51 @@ import {defs, tiny} from './examples/common.js';
 const {vec3, vec4, color, hex_color, Mat4, Light, Shape, Material, Shader, Texture, Scene, Vector3} = tiny;
 const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere} = defs;
 
+
+//////////////////////////TAKEN FROM https://webglfundamentals.org/webgl/lessons/webgl-text-html.html///////////////////////////
+
+function main() {
+  // Get A WebGL context
+  /** @type {HTMLCanvasElement} */
+  var canvas = document.querySelector("#canvas");
+  var gl = canvas.getContext("webgl");
+  if (!gl) {
+    return;
+  }
+
+  // look up the elements we want to affect
+  var timeElement = document.querySelector("#time");
+  // Create text nodes to save some time for the browser.
+  var timeNode = document.createTextNode("");
+  // Add those text nodes where they need to go
+  timeElement.appendChild(timeNode);
+  // setup GLSL program
+  var program = webglUtils.createProgramFromScripts(gl, ["vertex-shader-3d", "fragment-shader-3d"]);
+  var then = 0;
+  requestAnimationFrame(drawScene);
+
+  // Draw the scene.
+  function drawScene(clock) {
+    // Convert to seconds
+    clock *= 0.001;
+    // Subtract the previous time from the current time
+    var deltaTime = clock - then;
+    // Remember the current time for the next frame.
+    then = clock;
+    webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+    // set the nodes
+    timeNode.nodeValue = clock.toFixed(2);   // 2 decimal places
+    // Clear the canvas AND the depth buffer.
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // Tell it to use our program (pair of shaders)
+    gl.useProgram(program);
+    requestAnimationFrame(drawScene);
+  }
+}
+main();
+////////////////////////////////////////////////////////////////////////////////////
+
+
 export class FinalProject_Base extends Scene {
     constructor() {
         super();
@@ -95,6 +140,7 @@ export class FinalProject_Base extends Scene {
 
     }
 
+
     display(context, program_state) {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
@@ -108,6 +154,8 @@ export class FinalProject_Base extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
     }
 }
+
+
 
 
 export class FinalProject_Scene extends FinalProject_Base {
@@ -243,6 +291,8 @@ export class FinalProject_Scene extends FinalProject_Base {
 
     }
 }
+
+
 
 class TrackA extends Shape {
     constructor() {
