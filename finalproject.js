@@ -1,5 +1,5 @@
 import {defs, tiny} from './examples/common.js';
-const {vec3, vec4, color, hex_color, Mat4, Light, Shape, Material, Shader, Texture, Scene, Vector3} = tiny;
+const {vec3, vec4, color, hex_color, Mat4, Light, Shape, Material, Shader, Texture, Scene, Vector, Vector3} = tiny;
 const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere, Torus, Textured_Phong} = defs;
 
 import {Shape_From_File} from './examples/obj-file-demo.js';
@@ -58,6 +58,7 @@ export class FinalProject_Base extends Scene {
             'trackB': new TrackB(),
             'torus' : new defs.Torus(5, 15),
             "car": new Shape_From_File("assets/car.obj"),
+            "square": new Square(),
         };
 
         //
@@ -96,8 +97,9 @@ export class FinalProject_Base extends Scene {
                 {ambient: .2, diffusivity: .8, specularity: .5, color: color(.9, .5, .9, 1)}),
             metal: new Material(phong,
                 {ambient: .2, diffusivity: .8, specularity: .8, color: color(.9, .5, .9, 1)}),
-            ground: new Material(new defs.Phong_Shader(),
-                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#e8e6e1")}),
+            track: new Material(new defs.Textured_Phong(),
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000"),
+                    texture: new Texture("assets/road.gif", "LINEAR_MIPMAP_LINEAR")}),
             box: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#0000FF")}),
             car: new Material(new defs.Phong_Shader(),
@@ -111,6 +113,15 @@ export class FinalProject_Base extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/license3.gif", "LINEAR_MIPMAP_LINEAR")
             }),
+            side: new Material(new defs.Textured_Phong(),
+            {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000"),
+                texture: new Texture("assets/mountain.jpg", "LINEAR_MIPMAP_LINEAR")}),
+            grass: new Material(new defs.Textured_Phong(),
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000"),
+                    texture: new Texture("assets/grass.jpg", "LINEAR_MIPMAP_LINEAR")}),
+            sky: new Material(new defs.Textured_Phong(),
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000"),
+                    texture: new Texture("assets/sky.jpeg", "LINEAR_MIPMAP_LINEAR")}),
         };
     }
 
@@ -158,9 +169,6 @@ export class FinalProject_Base extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
     }
 }
-
-
-
 
 export class FinalProject_Scene extends FinalProject_Base {
     display(context, program_state) {
@@ -239,21 +247,29 @@ export class FinalProject_Scene extends FinalProject_Base {
             else if(this.camera_position < -1.5) this.camera_position = -1.5;
         }
 
+        // draw world's side
+        let world_transform_front = Mat4.identity().times(Mat4.translation(0,170,-150)).times(Mat4.scale(200,200,200));
+        this.shapes.square.draw(context, program_state, world_transform_front, this.materials.side);
+        let world_transform_back = Mat4.identity().times(Mat4.translation(0,170,150)).times(Mat4.scale(200,200,200));
+        this.shapes.square.draw(context, program_state, world_transform_back, this.materials.side);
+        let world_transform_left = Mat4.identity().times(Mat4.translation(150,170,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,0,1,0));
+        this.shapes.square.draw(context, program_state, world_transform_left, this.materials.side);
+        let world_transform_right = Mat4.identity().times(Mat4.translation(-150,170,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,0,1,0));
+        this.shapes.square.draw(context, program_state, world_transform_right, this.materials.side);
+        // draw world's ground
+        let world_transform_bottom = Mat4.identity().times(Mat4.translation(0,-20,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,1,0,0));
+        this.shapes.square.draw(context, program_state, world_transform_bottom, this.materials.grass);
+        // draw world's top
+        let world_transform_top = Mat4.identity().times(Mat4.translation(0,201,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,1,0,0));
+        this.shapes.square.draw(context, program_state, world_transform_top, this.materials.sky);
+
         // draw trackA
         let trackA_transform = Mat4.identity();
-        this.shapes.trackA.draw(context, program_state, trackA_transform, this.materials.ground);
+        this.shapes.trackA.draw(context, program_state, trackA_transform, this.materials.track);
 
         // draw trackB
         let trackB_transform = Mat4.identity().times(Mat4.translation(70,0,0));
-        this.shapes.trackB.draw(context, program_state, trackB_transform, this.materials.ground);
-
-        // draw the track 
-        // let track_transform = Mat4.identity();
-        // track_transform = track_transform.times(Mat4.translation(0, 0, -10)).times(Mat4.scale(5, .1, 20));
-        // this.shapes.box.draw(context, program_state, track_transform, this.materials.ground);
-        // track_transform = Mat4.identity();
-        // track_transform = track_transform.times(Mat4.translation(-15, 0, -25)).times(Mat4.scale(10, .1, 5));
-        // this.shapes.box.draw(context, program_state, track_transform, this.materials.ground);
+        this.shapes.trackB.draw(context, program_state, trackB_transform, this.materials.track);
 
         // draw the car
         let car_transform = Mat4.identity();
@@ -356,7 +372,6 @@ export class FinalProject_Scene extends FinalProject_Base {
 }
 
 
-
 class TrackA extends Shape {
     constructor() {
         super("position", "color");
@@ -405,6 +420,28 @@ class TrackA extends Shape {
             [0,1,0],
             [0,1,0],
         );
+        this.arrays.texture_coord = Vector.cast(
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            );
         this.indices.push(
             0,1,2,
             1,2,3,
@@ -475,6 +512,48 @@ class TrackB extends Shape {
             [0,0,-10],
             // TODO fence
         );
+        this.arrays.texture_coord = Vector.cast(
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],  // 9
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],  // 19
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],  // 29
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],  // 39
+        );
         this.arrays.normal = Vector3.cast(
             [0,1,0],  //0
             [0,1,0],
@@ -516,6 +595,7 @@ class TrackB extends Shape {
             [0,1,0],
             [0,1,0],
         );
+
         this.indices.push(
             0,1,2,
             1,2,3,
