@@ -1,6 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 const {vec3, vec4, color, hex_color, Mat4, Light, Shape, Material, Shader, Texture, Scene, Vector3} = tiny;
-const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere} = defs;
+const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere, Torus, Textured_Phong} = defs;
 
 
 //////////////////////////TAKEN FROM https://webglfundamentals.org/webgl/lessons/webgl-text-html.html///////////////////////////
@@ -33,11 +33,9 @@ function main() {
     var deltaTime = clock - then;
     // Remember the current time for the next frame.
     then = clock;
-    webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+    //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
     // set the nodes
     timeNode.nodeValue = clock.toFixed(2);   // 2 decimal places
-    // Clear the canvas AND the depth buffer.
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
     requestAnimationFrame(drawScene);
@@ -56,7 +54,11 @@ export class FinalProject_Base extends Scene {
             'ball': new Subdivision_Sphere(4),
             'trackA': new TrackA(),
             'trackB': new TrackB(),
+            'torus' : new defs.Torus(5, 15),
         };
+
+        //
+        this.hold = 0;
 
         // declare variable for 3rd person camera toggle
         this.third_person = false;
@@ -98,7 +100,14 @@ export class FinalProject_Base extends Scene {
             car: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#0000FF")}),
             wheel: new Material(new defs.Phong_Shader(),
-                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000")})
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000")}),
+            steering_wheel: new Material(new defs.Phong_Shader(),
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#624a2e")}),
+            texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/license3.gif", "LINEAR_MIPMAP_LINEAR")
+            }),
         };
     }
 
@@ -270,6 +279,60 @@ export class FinalProject_Scene extends FinalProject_Base {
         wheel_4_transform = wheel_4_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_4_transform, this.materials.wheel);
 
+        
+        //create steering wheel
+        let steering_wheel_transform = Mat4.identity().times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
+        if (this.left) {
+                let tot = dt;
+                let cont =+ tot;
+                steering_wheel_transform = steering_wheel_transform.times(Mat4.rotation(-Math.PI/2.0*cont, 0, 0, 1));
+                if (cont >= 10) {
+                        this.left = false;
+                        this.hold = 0;
+                        cont = 0;
+                }
+        }
+        if (this.right) {
+                let tot = dt;
+                let cont =+ tot;
+                steering_wheel_transform = steering_wheel_transform.times(Mat4.rotation(Math.PI/2.0, 0, 0, 1));
+                if (cont >= 10) {
+                        this.right = false;
+                        this.hold = 0;
+                        cont = 0;
+                }
+        }
+        this.shapes.torus.draw(context, program_state, steering_wheel_transform, this.materials.steering_wheel);
+
+
+
+        ////windshield
+        //bottom
+        let b_t = Mat4.identity();
+        b_t = b_t.times(Mat4.translation(0, 0.5, -1.9)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, 0.1, 0.1));
+        this.shapes.box.draw(context, program_state, b_t, this.materials.wheel);
+        //side 1
+        let l_t = Mat4.identity();
+        l_t = l_t.times(Mat4.translation(-0.90, 1.1, -1.3)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
+        this.shapes.box.draw(context, program_state, l_t, this.materials.wheel);
+        //side_2
+        let r_t = Mat4.identity();
+        r_t = r_t.times(Mat4.translation(0.90, 1.1, -1.3)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
+        this.shapes.box.draw(context, program_state, r_t, this.materials.wheel);
+        //top
+        let t_t = Mat4.identity();
+        t_t = t_t.times(Mat4.translation(0, 1.7, -0.3)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, 0.1, 0.5));
+        this.shapes.box.draw(context, program_state, t_t, this.materials.wheel);
+        //back cab
+        let b_c = Mat4.identity();
+        b_c = b_c.times(Mat4.translation(0, 1, 0.1)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, 0.7, 0.1));
+        this.shapes.box.draw(context, program_state, b_c, this.materials.wheel);
+
+        //license plate
+        let l_p = Mat4.identity();
+        l_p = l_p.times(Mat4.translation(0, 0, 1.99)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(0.4, 0.2, 0.05));
+        this.shapes.box.draw(context, program_state, l_p, this.materials.texture);
+
         // attach the camera to the car, attach in first or 
         // third person depending on the this.third_person variable set
         let camera_transform = Mat4.identity().times(Mat4.translation(0, 0, -this.position))
@@ -277,7 +340,7 @@ export class FinalProject_Scene extends FinalProject_Base {
         if(!this.unlock_camera)
         {
             if(!this.third_person)
-                program_state.set_camera(Mat4.inverse(camera_transform).times(Mat4.translation(0, -2, -1)));
+                program_state.set_camera(Mat4.inverse(camera_transform).times(Mat4.translation(0, -2.2, -0.7)));
             else
                 program_state.set_camera(Mat4.inverse(camera_transform
                     .times(Mat4.rotation(-Math.PI * .1 * this.camera_position, 0, 1, 0))
