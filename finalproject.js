@@ -2,6 +2,8 @@ import {defs, tiny} from './examples/common.js';
 const {vec3, vec4, color, hex_color, Mat4, Light, Shape, Material, Shader, Texture, Scene, Vector3} = tiny;
 const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere, Torus, Textured_Phong} = defs;
 
+import {Shape_From_File} from './examples/obj-file-demo.js';
+
 
 //////////////////////////TAKEN FROM https://webglfundamentals.org/webgl/lessons/webgl-text-html.html///////////////////////////
 
@@ -55,6 +57,7 @@ export class FinalProject_Base extends Scene {
             'trackA': new TrackA(),
             'trackB': new TrackB(),
             'torus' : new defs.Torus(5, 15),
+            "car": new Shape_From_File("assets/car.obj"),
         };
 
         //
@@ -84,10 +87,8 @@ export class FinalProject_Base extends Scene {
         this.natural_decceleration = 0.005;
         this.timer = 0;
 
-
         // debug options
         this.unlock_camera = false;
-
 
         const phong = new defs.Phong_Shader();
         this.materials = {
@@ -97,8 +98,10 @@ export class FinalProject_Base extends Scene {
                 {ambient: .2, diffusivity: .8, specularity: .8, color: color(.9, .5, .9, 1)}),
             ground: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#e8e6e1")}),
-            car: new Material(new defs.Phong_Shader(),
+            box: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#0000FF")}),
+            car: new Material(new defs.Phong_Shader(),
+                {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#FF0000")}),
             wheel: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000")}),
             steering_wheel: new Material(new defs.Phong_Shader(),
@@ -128,25 +131,17 @@ export class FinalProject_Base extends Scene {
             this.camera_right = true;
         });
         this.new_line();
-        this.key_triggered_button("Switch View", ["v"], function () {
-            // TODO
-        });
-        this.new_line();
-        this.key_triggered_button("Headlight On/Off", ["h"], function () {
-            // TODO
-        });
-        this.new_line();
         this.key_triggered_button("Map", ["m"], () => this.map_camera = !this.map_camera );
         this.new_line();
-
         // pressing 'c' switches between third and first person camera, we achieve this by toggling the this.third_person variable
         this.key_triggered_button("Switch Camera View", ["c"], () => this.third_person = !this.third_person)
-
         this.new_line();
-
         // pressing 'u' locks and unlocks the camera to the car, for debug purposes
         this.key_triggered_button("[Debug] Unlock Camera", ["u"], () => this.unlock_camera = !this.unlock_camera)
-
+        this.new_line();
+        this.key_triggered_button("Map 1", ["Control", "1"], () => {});
+        this.new_line();
+        this.key_triggered_button("Map 2", ["Control", "2"], () => {});
     }
 
 
@@ -263,7 +258,12 @@ export class FinalProject_Scene extends FinalProject_Base {
         // draw the car
         let car_transform = Mat4.identity();
         car_transform = car_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, .5, 2));
-        this.shapes.box.draw(context, program_state, car_transform, this.materials.car);
+        this.shapes.box.draw(context, program_state, car_transform, this.materials.box);
+
+        // draw second car
+        let car2_transform = Mat4.identity();
+        car2_transform = car2_transform.times(Mat4.translation(70, 1, 0));
+        this.shapes.car.draw(context, program_state, car2_transform.times(Mat4.rotation(Math.PI/2.0, 0, 1,0)), this.materials.car);
 
         //draw the wheels
         let wheel_1_transform = Mat4.identity();
@@ -349,7 +349,7 @@ export class FinalProject_Scene extends FinalProject_Base {
         }
         // map camera review
         if(this.map_camera){
-            program_state.set_camera(Mat4.identity().times(Mat4.rotation(Math.PI/2.0 , 1, 0, 0)).times(Mat4.translation(0, -250, 0)));
+            program_state.set_camera(Mat4.identity().times(Mat4.rotation(Math.PI/2.0 , 1, 0, 0)).times(Mat4.translation(0, -200, 20)));
         }
 
     }
