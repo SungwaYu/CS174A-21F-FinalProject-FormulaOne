@@ -8,6 +8,7 @@ import {Surfaces_Demo} from "./examples/surfaces-demo.js"
 import {Text_Demo} from "./examples/text-demo.js"
 import {Transforms_Sandbox} from "./examples/transforms-sandbox.js"
 import {Shadow_Demo} from "./examples/shadow-demo.js"
+import {Control_Demo} from "./examples/control-demo.js"
 import {FinalProject_Scene} from "./finalproject.js"
 
 // Pull these names into this module's scope for convenience:
@@ -36,6 +37,7 @@ Object.assign(defs,
     {Text_Demo},
     {Transforms_Sandbox},
     {Shadow_Demo},
+    {Control_Demo},
     {FinalProject_Scene});
 
 // ******************** End extra step

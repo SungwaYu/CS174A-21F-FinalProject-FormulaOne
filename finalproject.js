@@ -84,6 +84,7 @@ export class FinalProject_Base extends Scene {
         this.left = false;
         this.right = false;
         this.acceleration = 0.03;
+        this.gravity = -0.2;
         this.velocity = 0;
         this.position = 0;
         this.natural_decceleration = 0.005;
@@ -132,6 +133,13 @@ export class FinalProject_Base extends Scene {
 
     make_control_panel() {
         this.new_line();
+        this.live_string(box => box.textContent = "- pos_trans: " +
+            this.pos_trans[0][3].toFixed(2) + "," +
+            this.pos_trans[1][3].toFixed(2) + "," +
+            this.pos_trans[2][3].toFixed(2));
+        this.new_line();
+        this.live_string(box => box.textContent = "- velocity: " + this.velocity.toFixed(2));
+        this.new_line();
         this.new_line();
         this.key_triggered_button("Move Forward", ["ArrowUp"], () => this.forward = true);
         this.new_line();
@@ -155,16 +163,17 @@ export class FinalProject_Base extends Scene {
         // pressing 'u' locks and unlocks the camera to the car, for debug purposes
         this.key_triggered_button("[Debug] Unlock Camera", ["u"], () => this.unlock_camera = !this.unlock_camera)
         this.new_line();
-        this.key_triggered_button("Map 1", ["Control", "1"], () => {});
+        this.key_triggered_button("Map 1", ["Control", "1"], () => this.pos_trans = Mat4.identity().times(Mat4.translation(0, 1, 0)));
         this.new_line();
-        this.key_triggered_button("Map 2", ["Control", "2"], () => {});
+        this.key_triggered_button("Map 2", ["Control", "2"], () => this.pos_trans = Mat4.identity().times(Mat4.translation(70, 1, 0)));
         this.new_line();
-        this.key_triggered_button("Map 3", ["Control", "3"], () => {});
+        this.key_triggered_button("Map 3", ["Control", "3"], () => this.pos_trans = Mat4.identity().times(Mat4.translation(-57, 1, -65)).times(Mat4.rotation(-Math.PI/2.0,0,1,0)));
     }
 
 
     display(context, program_state) {
         if (!context.scratchpad.controls) {
+            this.children.push(new Game_Info(this.pos_trans));
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             program_state.set_camera(Mat4.identity().times(Mat4.translation(0, -4, 0)));
         }
@@ -268,6 +277,27 @@ export class FinalProject_Scene extends FinalProject_Base {
             this.position += this.velocity;
             this.pos_trans = this.pos_trans.times(Mat4.translation(0, 0, -this.velocity));
             this.camera_position += this.camera_velocity;
+
+
+            // physics for TrackC
+            // gravity
+            if(this.pos_trans[1][3]>1){
+                this.pos_trans[1][3] += this.gravity;
+            }
+            // uphill
+            if(this.pos_trans[2][3]>=-70 &&
+                this.pos_trans[2][3]<=-60 &&
+                this.pos_trans[0][3]>=-40 &&
+                this.pos_trans[0][3]<=0){
+                this.pos_trans[1][3] = 6 - 5.0/-40.0 * this.pos_trans[0][3];
+            }
+            // on top
+            if(this.pos_trans[2][3]>=-70 &&
+                this.pos_trans[2][3]<=-60 &&
+                this.pos_trans[0][3]>=0 &&
+                this.pos_trans[0][3]<=20){
+                this.pos_trans[1][3] = 6;
+            }
 
             /*
             // maximum camera_position: 1.5 TODO: bug - velocity still increasing
@@ -743,5 +773,15 @@ class TrackC extends Shape {
             5,4,6,
             4,6,7
         )
+    }
+}
+
+class Game_Info extends FinalProject_Base{
+    make_control_panel() {
+        this.new_line();
+        this.live_string(box => {
+            box.textContent = "Can add the timer here if other methods not work.\n" +
+                "I'm also thinking if we can separation the car's information here like the position, speed, etc"
+        });
     }
 }
