@@ -133,7 +133,21 @@ export class FinalProject_Base extends Scene {
 
     make_control_panel() {
         this.new_line();
-        this.live_string(box => box.textContent = "- pos_trans: " +
+        // the following commented code can be used to debug
+        // this.live_string(box => box.textContent = "- pos_trans[0]: " +
+        //     this.pos_trans[0][0].toFixed(2) + "," + this.pos_trans[0][1].toFixed(2) + "," + this.pos_trans[0][2].toFixed(2) + "," + this.pos_trans[0][3].toFixed(2));
+        // this.new_line();
+        // this.live_string(box => box.textContent = "- pos_trans[1]: " +
+        //     this.pos_trans[1][0].toFixed(2) + "," + this.pos_trans[1][1].toFixed(2) + "," + this.pos_trans[1][2].toFixed(2) + "," + this.pos_trans[1][3].toFixed(2));
+        // this.new_line();
+        // this.live_string(box => box.textContent = "- pos_trans[2]: " +
+        //     this.pos_trans[2][0].toFixed(2) + "," + this.pos_trans[2][1].toFixed(2) + "," + this.pos_trans[2][2].toFixed(2) + "," + this.pos_trans[2][3].toFixed(2));
+        // this.new_line();
+        // this.live_string(box => box.textContent = "- pos_trans[3]: " +
+        //     this.pos_trans[3][0].toFixed(2) + "," + this.pos_trans[3][1].toFixed(2) + "," + this.pos_trans[3][2].toFixed(2) + "," + this.pos_trans[3][3].toFixed(2));
+        // this.new_line();
+        // this.new_line();
+        this.live_string(box => box.textContent = "- pos_trans_translation: " +
             this.pos_trans[0][3].toFixed(2) + "," +
             this.pos_trans[1][3].toFixed(2) + "," +
             this.pos_trans[2][3].toFixed(2));
@@ -165,7 +179,7 @@ export class FinalProject_Base extends Scene {
         this.new_line();
         this.key_triggered_button("Map 1", ["Control", "1"], () => this.pos_trans = Mat4.identity().times(Mat4.translation(0, 1, 0)));
         this.new_line();
-        this.key_triggered_button("Map 2", ["Control", "2"], () => this.pos_trans = Mat4.identity().times(Mat4.translation(70, 1, 0)));
+        this.key_triggered_button("Map 2", ["Control", "2"], () => this.pos_trans = Mat4.identity().times(Mat4.translation(68, 1, 21)));
         this.new_line();
         this.key_triggered_button("Map 3", ["Control", "3"], () => this.pos_trans = Mat4.identity().times(Mat4.translation(-57, 1, -65)).times(Mat4.rotation(-Math.PI/2.0,0,1,0)));
     }
@@ -289,14 +303,24 @@ export class FinalProject_Scene extends FinalProject_Base {
                 this.pos_trans[2][3]<=-60 &&
                 this.pos_trans[0][3]>=-40 &&
                 this.pos_trans[0][3]<=0){
+                // increase y
                 this.pos_trans[1][3] = 6 - 5.0/-40.0 * this.pos_trans[0][3];
+                // rotate car
+                // this.pos_trans[0][0] = 1;
+                // this.pos_trans[1][1] = 1;
+                // this.pos_trans[2][2] = 1;
+                // //.times(Mat4.rotation(Math.PI/10.0,0,0,1)).times(Mat4.rotation(-Math.PI/2.0,0,1,0))
             }
             // on top
-            if(this.pos_trans[2][3]>=-70 &&
+            else if(this.pos_trans[2][3]>=-70 &&
                 this.pos_trans[2][3]<=-60 &&
                 this.pos_trans[0][3]>=0 &&
                 this.pos_trans[0][3]<=20){
+                // increase y
                 this.pos_trans[1][3] = 6;
+            }
+            // ground
+            else {
             }
 
             /*
@@ -336,27 +360,30 @@ export class FinalProject_Scene extends FinalProject_Base {
 
         // draw the car
         let position_transform = this.pos_trans;
-        let car_transform = position_transform.times(Mat4.scale(1, .5, 2));
-        this.shapes.box.draw(context, program_state, car_transform, this.materials.box);
+        // let car_transform = position_transform.times(Mat4.scale(1, .5, 2));
+        // this.shapes.box.draw(context, program_state, car_transform, this.materials.box);
+        let car_transform = position_transform.times(Mat4.translation(0,0.8,0)).times(Mat4.scale(1.5,1.5,1.5));
+        this.shapes.car.draw(context, program_state, car_transform.times(Mat4.rotation(Math.PI/2.0, 0, 1,0)), this.materials.car);
 
         // draw second car
         let car2_transform = Mat4.identity();
-        car2_transform = car2_transform.times(Mat4.translation(70, 1, 0));
-        this.shapes.car.draw(context, program_state, car2_transform.times(Mat4.rotation(Math.PI/2.0, 0, 1,0)), this.materials.car);
+        car2_transform = car2_transform.times(Mat4.translation(72, 1, 20))
+        this.shapes.box.draw(context, program_state, car2_transform.times(Mat4.scale(1,.5,2)), this.materials.box);
 
         //draw the wheels
-        let wheel_1_transform = position_transform.times(Mat4.translation(-0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_1_transform = car2_transform.times(Mat4.translation(-0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_1_transform, this.materials.wheel);
-        let wheel_2_transform = position_transform.times(Mat4.translation(0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_2_transform = car2_transform.times(Mat4.translation(0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_2_transform, this.materials.wheel);
-        let wheel_3_transform = position_transform.times(Mat4.translation(-0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_3_transform = car2_transform.times(Mat4.translation(-0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_3_transform, this.materials.wheel);
-        let wheel_4_transform = position_transform.times(Mat4.translation(0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_4_transform = car2_transform.times(Mat4.translation(0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_4_transform, this.materials.wheel);
 
-        
+
         //create steering wheel
-        let steering_wheel_transform = position_transform.times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
+        let steering_wheel_transform = car2_transform.times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
+        let steering_wheel2_transform = position_transform.times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
         if (this.left) {
                 let tot = dt;
                 let cont =+ tot;
@@ -378,33 +405,34 @@ export class FinalProject_Scene extends FinalProject_Base {
                 }
         }
         this.shapes.torus.draw(context, program_state, steering_wheel_transform, this.materials.steering_wheel);
+        this.shapes.torus.draw(context, program_state, steering_wheel2_transform, this.materials.steering_wheel);
 
 
 
         ////windshield
         //bottom
-        let b_t = position_transform.times(Mat4.translation(0, 0.5, -1.9)).times(Mat4.scale(1, 0.1, 0.1));
+        let b_t = car2_transform.times(Mat4.translation(0, 0.5, -1.9)).times(Mat4.scale(1, 0.1, 0.1));
         this.shapes.box.draw(context, program_state, b_t, this.materials.wheel);
         //side 1
-        let l_t = position_transform.times(Mat4.translation(-0.90, 1.1, -1.3)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
+        let l_t = car2_transform.times(Mat4.translation(-0.90, 1.1, -1.3)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
         this.shapes.box.draw(context, program_state, l_t, this.materials.wheel);
         //side_2
-        let r_t = position_transform.times(Mat4.translation(0.90, 1.1, -1.3)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
+        let r_t = car2_transform.times(Mat4.translation(0.90, 1.1, -1.3)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
         this.shapes.box.draw(context, program_state, r_t, this.materials.wheel);
         //top
-        let t_t = position_transform.times(Mat4.translation(0, 1.7, -0.3)).times(Mat4.scale(1, 0.1, 0.5));
+        let t_t = car2_transform.times(Mat4.translation(0, 1.7, -0.3)).times(Mat4.scale(1, 0.1, 0.5));
         this.shapes.box.draw(context, program_state, t_t, this.materials.wheel);
         //back cab
-        let b_c = position_transform.times(Mat4.translation(0, 1, 0.1)).times(Mat4.scale(1, 0.7, 0.1));
+        let b_c = car2_transform.times(Mat4.translation(0, 1, 0.1)).times(Mat4.scale(1, 0.7, 0.1));
         this.shapes.box.draw(context, program_state, b_c, this.materials.wheel);
 
         //license plate
-        let l_p = position_transform.times(Mat4.translation(0, 0, 1.99)).times(Mat4.scale(0.4, 0.2, 0.05));
+        let l_p = car2_transform.times(Mat4.translation(0, 0, 1.99)).times(Mat4.scale(0.4, 0.2, 0.05));
         this.shapes.box.draw(context, program_state, l_p, this.materials.texture);
 
         // attach the camera to the car, attach in first or 
         // third person depending on the this.third_person variable set
-        let camera_transform = position_transform.times(Mat4.translation(0, -1, 0))
+        let camera_transform = position_transform.times(Mat4.translation(0, -1, 0));
         // set debug option to unloock camera
         if(!this.unlock_camera)
         {
