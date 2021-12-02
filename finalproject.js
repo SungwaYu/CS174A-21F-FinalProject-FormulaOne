@@ -65,7 +65,7 @@ export class FinalProject_Base extends Scene {
         this.hold = 0;
 
         // declare variable for 3rd person camera toggle
-        this.third_person = false;
+        this.third_person = true;
 
         // declare variable for map view, default false
         this.map_camera = false;
@@ -87,6 +87,10 @@ export class FinalProject_Base extends Scene {
         this.position = 0;
         this.natural_decceleration = 0.005;
         this.timer = 0;
+        this.max_velocity = 0.6;
+        this.rotation_displacement = 0;
+        this.rotation_velocity = Math.PI/40;
+        this.pos_trans = Mat4.identity().times(Mat4.translation(0, 1, 0));
 
         // debug options
         this.unlock_camera = false;
@@ -189,14 +193,30 @@ export class FinalProject_Scene extends FinalProject_Base {
             if(this.forward)
             {
                 this.forward = false;
-                this.velocity += this.acceleration;
+                if(Math.abs(this.velocity) < this.max_velocity)
+                    this.velocity += this.acceleration;
             }
             // apply backward acceleration
             if(this.backward)
             {
                 this.backward = false;
-                this.velocity -= this.acceleration;
+                if(Math.abs(this.velocity) < this.max_velocity)
+                    this.velocity -= this.acceleration;
             }
+
+            if(this.left)
+            {
+                this.left = false;
+                this.pos_trans = this.pos_trans.times(Mat4.rotation(this.rotation_velocity, 0, 1, 0))
+            }
+
+            if(this.right)
+            {
+                this.right = false;
+                this.pos_trans = this.pos_trans.times(Mat4.rotation(-this.rotation_velocity, 0, 1, 0))
+            }
+
+            /*
             // apply camera_left acceleration
             if(this.camera_left)
             {
@@ -209,6 +229,7 @@ export class FinalProject_Scene extends FinalProject_Base {
                 this.camera_right = false;
                 this.camera_velocity -= this.camera_acceleration;
             }
+            */
 
             // apply natural decceleration
             // set velocity equal to 0 if small enough
@@ -221,6 +242,7 @@ export class FinalProject_Scene extends FinalProject_Base {
                 this.velocity += this.natural_decceleration;
 
             // stop camera and rebound to 0
+            /*
             if(this.camera_velocity < epsilon && this.camera_velocity > -epsilon)
             {
                 this.camera_velocity = 0;
@@ -237,14 +259,18 @@ export class FinalProject_Scene extends FinalProject_Base {
                 this.camera_velocity -= this.natural_decceleration;
             else if(this.camera_velocity < 0)
                 this.camera_velocity += this.natural_decceleration;
+            */
             
             // apply velocity to position
             this.position += this.velocity;
+            this.pos_trans = this.pos_trans.times(Mat4.translation(0, 0, -this.velocity));
             this.camera_position += this.camera_velocity;
 
+            /*
             // maximum camera_position: 1.5 TODO: bug - velocity still increasing
             if(this.camera_position > 1.5) this.camera_position = 1.5;
             else if(this.camera_position < -1.5) this.camera_position = -1.5;
+            */
         }
 
         // draw world's side
@@ -272,8 +298,8 @@ export class FinalProject_Scene extends FinalProject_Base {
         this.shapes.trackB.draw(context, program_state, trackB_transform, this.materials.track);
 
         // draw the car
-        let car_transform = Mat4.identity();
-        car_transform = car_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, .5, 2));
+        let position_transform = this.pos_trans;
+        let car_transform = position_transform.times(Mat4.scale(1, .5, 2));
         this.shapes.box.draw(context, program_state, car_transform, this.materials.box);
 
         // draw second car
@@ -282,22 +308,18 @@ export class FinalProject_Scene extends FinalProject_Base {
         this.shapes.car.draw(context, program_state, car2_transform.times(Mat4.rotation(Math.PI/2.0, 0, 1,0)), this.materials.car);
 
         //draw the wheels
-        let wheel_1_transform = Mat4.identity();
-        wheel_1_transform = wheel_1_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(-0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_1_transform = position_transform.times(Mat4.translation(-0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_1_transform, this.materials.wheel);
-        let wheel_2_transform = Mat4.identity();
-        wheel_2_transform = wheel_2_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_2_transform = position_transform.times(Mat4.translation(0.75, -0.4, -1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_2_transform, this.materials.wheel);
-        let wheel_3_transform = Mat4.identity();
-        wheel_3_transform = wheel_3_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(-0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_3_transform = position_transform.times(Mat4.translation(-0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_3_transform, this.materials.wheel);
-        let wheel_4_transform = Mat4.identity();
-        wheel_4_transform = wheel_4_transform.times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
+        let wheel_4_transform = position_transform.times(Mat4.translation(0.75, -0.4, 1.45)).times(Mat4.scale(0.25, 0.5, 0.5));
         this.shapes.ball.draw(context, program_state, wheel_4_transform, this.materials.wheel);
 
         
         //create steering wheel
-        let steering_wheel_transform = Mat4.identity().times(Mat4.translation(0, 1, -this.position)).times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
+        let steering_wheel_transform = position_transform.times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
         if (this.left) {
                 let tot = dt;
                 let cont =+ tot;
@@ -324,34 +346,28 @@ export class FinalProject_Scene extends FinalProject_Base {
 
         ////windshield
         //bottom
-        let b_t = Mat4.identity();
-        b_t = b_t.times(Mat4.translation(0, 0.5, -1.9)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, 0.1, 0.1));
+        let b_t = position_transform.times(Mat4.translation(0, 0.5, -1.9)).times(Mat4.scale(1, 0.1, 0.1));
         this.shapes.box.draw(context, program_state, b_t, this.materials.wheel);
         //side 1
-        let l_t = Mat4.identity();
-        l_t = l_t.times(Mat4.translation(-0.90, 1.1, -1.3)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
+        let l_t = position_transform.times(Mat4.translation(-0.90, 1.1, -1.3)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
         this.shapes.box.draw(context, program_state, l_t, this.materials.wheel);
         //side_2
-        let r_t = Mat4.identity();
-        r_t = r_t.times(Mat4.translation(0.90, 1.1, -1.3)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
+        let r_t = position_transform.times(Mat4.translation(0.90, 1.1, -1.3)).times(Mat4.rotation(Math.PI/2.0, 0, 0, 1)).times(Mat4.rotation(-Math.PI/4.0, 0, 1, 0)).times(Mat4.scale(0.8, 0.1, 0.1));
         this.shapes.box.draw(context, program_state, r_t, this.materials.wheel);
         //top
-        let t_t = Mat4.identity();
-        t_t = t_t.times(Mat4.translation(0, 1.7, -0.3)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, 0.1, 0.5));
+        let t_t = position_transform.times(Mat4.translation(0, 1.7, -0.3)).times(Mat4.scale(1, 0.1, 0.5));
         this.shapes.box.draw(context, program_state, t_t, this.materials.wheel);
         //back cab
-        let b_c = Mat4.identity();
-        b_c = b_c.times(Mat4.translation(0, 1, 0.1)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(1, 0.7, 0.1));
+        let b_c = position_transform.times(Mat4.translation(0, 1, 0.1)).times(Mat4.scale(1, 0.7, 0.1));
         this.shapes.box.draw(context, program_state, b_c, this.materials.wheel);
 
         //license plate
-        let l_p = Mat4.identity();
-        l_p = l_p.times(Mat4.translation(0, 0, 1.99)).times(Mat4.translation(0, 1, -this.position)).times(Mat4.scale(0.4, 0.2, 0.05));
+        let l_p = position_transform.times(Mat4.translation(0, 0, 1.99)).times(Mat4.scale(0.4, 0.2, 0.05));
         this.shapes.box.draw(context, program_state, l_p, this.materials.texture);
 
         // attach the camera to the car, attach in first or 
         // third person depending on the this.third_person variable set
-        let camera_transform = Mat4.identity().times(Mat4.translation(0, 0, -this.position))
+        let camera_transform = position_transform.times(Mat4.translation(0, -1, 0))
         // set debug option to unloock camera
         if(!this.unlock_camera)
         {
