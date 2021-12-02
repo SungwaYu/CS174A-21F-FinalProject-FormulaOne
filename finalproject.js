@@ -56,6 +56,7 @@ export class FinalProject_Base extends Scene {
             'ball': new Subdivision_Sphere(4),
             'trackA': new TrackA(),
             'trackB': new TrackB(),
+            'trackC': new TrackC(),
             'torus' : new defs.Torus(5, 15),
             "car": new Shape_From_File("assets/car.obj"),
             "square": new Square(),
@@ -157,6 +158,8 @@ export class FinalProject_Base extends Scene {
         this.key_triggered_button("Map 1", ["Control", "1"], () => {});
         this.new_line();
         this.key_triggered_button("Map 2", ["Control", "2"], () => {});
+        this.new_line();
+        this.key_triggered_button("Map 3", ["Control", "3"], () => {});
     }
 
 
@@ -283,7 +286,7 @@ export class FinalProject_Scene extends FinalProject_Base {
         let world_transform_right = Mat4.identity().times(Mat4.translation(-150,170,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,0,1,0));
         this.shapes.square.draw(context, program_state, world_transform_right, this.materials.side);
         // draw world's ground
-        let world_transform_bottom = Mat4.identity().times(Mat4.translation(0,-20,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,1,0,0));
+        let world_transform_bottom = Mat4.identity().times(Mat4.translation(0,-1,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,1,0,0));
         this.shapes.square.draw(context, program_state, world_transform_bottom, this.materials.grass);
         // draw world's top
         let world_transform_top = Mat4.identity().times(Mat4.translation(0,201,0)).times(Mat4.scale(200,200,200)).times(Mat4.rotation(Math.PI/2.0,1,0,0));
@@ -296,6 +299,10 @@ export class FinalProject_Scene extends FinalProject_Base {
         // draw trackB
         let trackB_transform = Mat4.identity().times(Mat4.translation(70,0,0));
         this.shapes.trackB.draw(context, program_state, trackB_transform, this.materials.track);
+
+        // draw trackC
+        let trackC_transform = Mat4.identity().times(Mat4.translation(-10,0,-60));
+        this.shapes.trackC.draw(context, program_state, trackC_transform, this.materials.track);
 
         // draw the car
         let position_transform = this.pos_trans;
@@ -503,29 +510,68 @@ class TrackB extends Shape {
             [-40,0,0],
             [-35,0,-5],
             [-45,0,-10],  // 15
-            [-10,5,-45],
-            [0,5,-40],
-            [-5,5,-50],
-            [5,5,-50],
-            [-5,5,-75],  // 20
-            [5,5,-75],
-            [0,5,-85],
-            [-10,5,-80],
-            [-10,5,-90],
-            [-35,5,-80],  // 25
-            [-35,5,-90],
-            [-45,5,-85],
-            [-40,5,-75],
-            [-50,5,-75],
-            [-40,5,-50],  // 30
-            [-50,5,-50],
-            [-45,5,-40],
-            [-35,5,-45],
-            [-15,5,-10],
-            [-5,5,-15], // 35
+            [-10,0,-45],
+            [0,0,-40],
+            [-5,0,-50],
+            [5,0,-50],
+            [-5,0,-75],  // 20
+            [5,0,-75],
+            [0,0,-85],
+            [-10,0,-80],
+            [-10,0,-90],
+            [-35,0,-80],  // 25
+            [-35,0,-90],
+            [-45,0,-85],
+            [-40,0,-75],
+            [-50,0,-75],
+            [-40,0,-50],  // 30
+            [-50,0,-50],
+            [-45,0,-40],
+            [-35,0,-45],
+            [-15,0,-10],
+            [-5,0,-15], // 35
             [-15,0,-10],
             [-5,0,-15],
             [0,0,-10],
+            // [5,0,0], // 0
+            // [-5,0,0],
+            // [5,0,25],
+            // [-5,0,25],
+            // [-10,0,30],
+            // [0,0,35], // 5
+            // [-10,0,40],
+            // [-35,0,30],
+            // [-35,0,40],
+            // [-45,0,35],
+            // [-40,0,25], // 10
+            // [-50,0,25],
+            // [-50,0,0],
+            // [-40,0,0],
+            // [-35,0,-5],
+            // [-45,0,-10],  // 15
+            // [-10,5,-45],
+            // [0,5,-40],
+            // [-5,5,-50],
+            // [5,5,-50],
+            // [-5,5,-75],  // 20
+            // [5,5,-75],
+            // [0,5,-85],
+            // [-10,5,-80],
+            // [-10,5,-90],
+            // [-35,5,-80],  // 25
+            // [-35,5,-90],
+            // [-45,5,-85],
+            // [-40,5,-75],
+            // [-50,5,-75],
+            // [-40,5,-50],  // 30
+            // [-50,5,-50],
+            // [-45,5,-40],
+            // [-35,5,-45],
+            // [-15,5,-10],
+            // [-5,5,-15], // 35
+            // [-15,0,-10],
+            // [-5,0,-15],
+            // [0,0,-10],
             // TODO fence
         );
         this.arrays.texture_coord = Vector.cast(
@@ -652,6 +698,50 @@ class TrackB extends Shape {
             37,36,38,
             36,38,1,
             38,1,0
+        )
+    }
+}
+
+class TrackC extends Shape {
+    constructor() {
+        super("position", "color");
+        this.arrays.position = Vector3.cast(
+            [10,5,0],
+            [30,5,0],
+            [30,5,-10],
+            [10,5,-10],
+            [-30,0,0],
+            [-30,0,-10],
+            [-50,0,-10],
+            [-50,0,0]
+        );
+        this.arrays.normal = Vector3.cast(
+            [0,1,0],
+            [0,1,0],
+            [0,1,0],
+            [0,1,0],
+            [0,1,0],
+            [0,1,0],
+            [0,1,0],
+            [0,1,0]
+        );
+        this.arrays.texture_coord = Vector.cast(
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1]
+        );
+        this.indices.push(
+            1,0,2,
+            0,2,3,
+            3,0,4,
+            4,3,5,
+            5,4,6,
+            4,6,7
         )
     }
 }
