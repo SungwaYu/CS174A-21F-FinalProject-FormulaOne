@@ -5,48 +5,6 @@ const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere, Torus,
 import {Shape_From_File} from './examples/obj-file-demo.js';
 
 
-//////////////////////////TAKEN FROM https://webglfundamentals.org/webgl/lessons/webgl-text-html.html///////////////////////////
-
-function main() {
-  // Get A WebGL context
-  /** @type {HTMLCanvasElement} */
-  var canvas = document.querySelector("#canvas");
-  var gl = canvas.getContext("webgl");
-  if (!gl) {
-    return;
-  }
-
-  // look up the elements we want to affect
-  var timeElement = document.querySelector("#time");
-  // Create text nodes to save some time for the browser.
-  var timeNode = document.createTextNode("");
-  // Add those text nodes where they need to go
-  timeElement.appendChild(timeNode);
-  // setup GLSL program
-  var program = webglUtils.createProgramFromScripts(gl, ["vertex-shader-3d", "fragment-shader-3d"]);
-  var then = 0;
-  requestAnimationFrame(drawScene);
-
-  // Draw the scene.
-  function drawScene(clock) {
-    // Convert to seconds
-    clock *= 0.001;
-    // Subtract the previous time from the current time
-    var deltaTime = clock - then;
-    // Remember the current time for the next frame.
-    then = clock;
-    //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-    // set the nodes
-    timeNode.nodeValue = clock.toFixed(2);   // 2 decimal places
-    // Tell it to use our program (pair of shaders)
-    gl.useProgram(program);
-    requestAnimationFrame(drawScene);
-  }
-}
-main();
-////////////////////////////////////////////////////////////////////////////////////
-
-
 export class FinalProject_Base extends Scene {
     constructor() {
         super();
@@ -537,12 +495,13 @@ export class FinalProject_Scene extends FinalProject_Base {
         if(this.third_person) {
             score_transform = camera_transform.times(Mat4.translation(0, 5, -2)).times(Mat4.scale(1, 1, 0.1));
         }
-        
+
+///////////This creates a score box that follows the car 
         //create score box
-        this.shapes.score_table.draw(context, program_state, score_transform, this.materials.grey);
+        //this.shapes.score_table.draw(context, program_state, score_transform, this.materials.grey);
         
         //var hold_score = this.score.toFixed(2);
-        var n = this.score.toString();
+        var n = this.score.toFixed(2).toString();
         let strings = ["Score = " + "n"];
 
         //strings for score box
@@ -562,7 +521,7 @@ export class FinalProject_Scene extends FinalProject_Base {
 
         
 
-
+//////////////This should be create text on a box, but shader is having trouble with text demo code from Text_Line
 //         for (let i = 0; i < 3; i++)
 //             for (let j = 0; j < 2; j++) {             // Find the matrix for a basis located along one of the cube's sides:
 //                 let cube_side = Mat4.rotation(i == 0 ? Math.PI / 2 : 0, 1, 0, 0)
@@ -955,6 +914,7 @@ class TrackC extends Shape {
 }
 
 class Game_Info extends FinalProject_Base{
+    //control panel to start and stop game
     make_control_panel() {
         this.new_line();
         this.live_string(box => box.textContent = "Score: " +
@@ -973,17 +933,15 @@ class Game_Info extends FinalProject_Base{
         super.display(context, program_state);
 
         const t = this.t = program_state.animation_time / 1000, dt = program_state.animation_delta_time;
-        // physics implementation, we want all our physics to be processed at 
-        // the same intervals so we want to use dt to find a fixed physics framerate
-        // for this demo we will process physics at 50 frames a second
 
+//////Calculate start and stop score
         if (this.start == true) {
             if(this.end == false) {
                 this.score_2 += ((this.score*1000)+dt)/1000;
             }
         }
 
-
+/////Give a final score
         if (this.start == true) {
             if (this.end == true) {
                 this.phrase = ["Congrats, you win! Final Score = " + this.score_2.toFixed(2).toString() + " seconds."];
@@ -999,15 +957,7 @@ class Game_Info extends FinalProject_Base{
 
 
 
-export class Text_Line extends Shape {                           // **Text_Line** embeds text in the 3D world, using a crude texture
-                                                                 // method.  This Shape is made of a horizontal arrangement of quads.
-                                                                 // Each is textured over with images of ASCII characters, spelling
-                                                                 // out a string.  Usage:  Instantiate the Shape with the desired
-                                                                 // character line width.  Then assign it a single-line string by calling
-                                                                 // set_string("your string") on it. Draw the shape on a material
-                                                                 // with full ambient weight, and text.png assigned as its texture
-                                                                 // file.  For multi-line strings, repeat this process and draw with
-                                                                 // a different matrix.
+export class Text_Line extends Shape {                          
     constructor(max_size) {
         super("position", "normal", "texture_coord");
         this.max_size = max_size;
