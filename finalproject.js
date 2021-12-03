@@ -240,10 +240,10 @@ export class FinalProject_Scene extends FinalProject_Base {
         // for this demo we will process physics at 50 frames a second
 
         this.timer += dt
-        if(this.timer > 20)
+        if(this.timer > 10)
         {
             // process physics within here so physics is processed in fixed intervals
-            this.timer -= 20
+            this.timer -= 10
             // apply forward acceleration
             if(this.forward)
             {
@@ -467,7 +467,6 @@ export class FinalProject_Scene extends FinalProject_Base {
                 program_state.set_camera(Mat4.inverse(camera_transform).times(Mat4.translation(0, -2.2, -0.7)));
             else
                 program_state.set_camera(Mat4.inverse(camera_transform
-                    .times(Mat4.rotation(-Math.PI * .1 * this.camera_position, 0, 1, 0))
                     .times(Mat4.rotation(-Math.PI * .05, 1, 0, 0))
                     .times(Mat4.translation(0, 2, 10))));
         }
