@@ -71,6 +71,8 @@ export class FinalProject_Base extends Scene {
         this.start = false;
         this.end = false;
         this.score = 0;
+        this.score_2 = 0;
+        this.phrase = "";
 
         // declare variable for 3rd person camera toggle
         this.third_person = true;
@@ -257,11 +259,6 @@ export class FinalProject_Scene extends FinalProject_Base {
         // the same intervals so we want to use dt to find a fixed physics framerate
         // for this demo we will process physics at 50 frames a second
 
-        if (this.start == true) {
-            if(this.end == false) {
-                score = score + dt;
-            }
-        }
 
         this.timer += dt
         if(this.timer > 10)
@@ -544,8 +541,8 @@ export class FinalProject_Scene extends FinalProject_Base {
         //create score box
         this.shapes.score_table.draw(context, program_state, score_transform, this.materials.grey);
         
-        var hold_score = this.score.toFixed(2);
-        var n = hold_score.toString();
+        //var hold_score = this.score.toFixed(2);
+        var n = this.score.toString();
         let strings = ["Score = " + "n"];
 
         //strings for score box
@@ -960,15 +957,42 @@ class TrackC extends Shape {
 class Game_Info extends FinalProject_Base{
     make_control_panel() {
         this.new_line();
-        this.live_string(box => {
-            box.textContent = "Can add the timer here if other methods not work.\n" +
-                "I'm also thinking if we can separation the car's information here like the position, speed, etc."
-        });
+        this.live_string(box => box.textContent = "Score: " +
+            this.score_2.toFixed(2));
+        this.new_line();
+        this.new_line();
         this.new_line();
         this.key_triggered_button("Start Race", ["g"], () => this.start = true)
         this.new_line();
         this.key_triggered_button("End Race", ["h"], () => this.end = true)
-        this.new_line();
+        this.new_line(); this.new_line(); this.new_line(); this.new_line(); this.new_line();
+        this.live_string(box => box.textContent = this.phrase);
+    }
+    display(context, program_state) {
+
+        super.display(context, program_state);
+
+        const t = this.t = program_state.animation_time / 1000, dt = program_state.animation_delta_time;
+        // physics implementation, we want all our physics to be processed at 
+        // the same intervals so we want to use dt to find a fixed physics framerate
+        // for this demo we will process physics at 50 frames a second
+
+        if (this.start == true) {
+            if(this.end == false) {
+                this.score_2 += ((this.score*1000)+dt)/1000;
+            }
+        }
+
+
+        if (this.start == true) {
+            if (this.end == true) {
+                this.phrase = ["Congrats, you win! Final Score = " + this.score_2.toFixed(2).toString() + " seconds."];
+            }
+        }
+        else{
+                this.phrase = "";
+        }
+
     }
 }
 
