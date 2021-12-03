@@ -94,6 +94,9 @@ export class FinalProject_Base extends Scene {
         this.rotation_velocity = Math.PI/40;
         this.pos_trans = Mat4.identity().times(Mat4.translation(0, 1, 0));
 
+        document.addEventListener("keydown", this.key_down_handler.bind(this));
+        document.addEventListener("keyup", this.key_up_handler.bind(this));
+
         // debug options
         this.unlock_camera = false;
 
@@ -131,6 +134,30 @@ export class FinalProject_Base extends Scene {
         };
     }
 
+    key_down_handler(event){
+        console.log("Keydown " + event.key)
+        if(event.key == "i")
+            this.forward = true
+        if(event.key == "k")
+            this.backward = true
+        if(event.key == "j")
+            this.left = true
+        if(event.key == "l")
+            this.right = true
+    }
+
+    key_up_handler(event){
+        console.log("Keyup " + event.key)
+        if(event.key == "i")
+            this.forward = false
+        if(event.key == "k")
+            this.backward = false
+        if(event.key == "j")
+            this.left = false
+        if(event.key == "l")
+            this.right = false
+    }
+
     make_control_panel() {
         this.new_line();
         // the following commented code can be used to debug
@@ -155,6 +182,7 @@ export class FinalProject_Base extends Scene {
         this.live_string(box => box.textContent = "- velocity: " + this.velocity.toFixed(2));
         this.new_line();
         this.new_line();
+        /*
         this.key_triggered_button("Move Forward", ["ArrowUp"], () => this.forward = true);
         this.new_line();
         this.key_triggered_button("Move Backward", ["ArrowDown"], () => this.backward = true)
@@ -168,6 +196,7 @@ export class FinalProject_Base extends Scene {
             this.right = true;
             this.camera_right = true;
         });
+        */
         this.new_line();
         this.key_triggered_button("Map", ["m"], () => this.map_camera = !this.map_camera );
         this.new_line();
@@ -218,27 +247,23 @@ export class FinalProject_Scene extends FinalProject_Base {
             // apply forward acceleration
             if(this.forward)
             {
-                this.forward = false;
                 if(Math.abs(this.velocity) < this.max_velocity)
                     this.velocity += this.acceleration;
             }
             // apply backward acceleration
             if(this.backward)
             {
-                this.backward = false;
                 if(Math.abs(this.velocity) < this.max_velocity)
                     this.velocity -= this.acceleration;
             }
 
             if(this.left)
             {
-                this.left = false;
                 this.pos_trans = this.pos_trans.times(Mat4.rotation(this.rotation_velocity, 0, 1, 0))
             }
 
             if(this.right)
             {
-                this.right = false;
                 this.pos_trans = this.pos_trans.times(Mat4.rotation(-this.rotation_velocity, 0, 1, 0))
             }
 
@@ -384,6 +409,7 @@ export class FinalProject_Scene extends FinalProject_Base {
         //create steering wheel
         let steering_wheel_transform = car2_transform.times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
         let steering_wheel2_transform = position_transform.times(Mat4.translation(0, 0.8, -1)).times(Mat4.scale(0.3, 0.3, 0.3));
+        /*
         if (this.left) {
                 let tot = dt;
                 let cont =+ tot;
@@ -404,6 +430,7 @@ export class FinalProject_Scene extends FinalProject_Base {
                         cont = 0;
                 }
         }
+        */
         this.shapes.torus.draw(context, program_state, steering_wheel_transform, this.materials.steering_wheel);
         this.shapes.torus.draw(context, program_state, steering_wheel2_transform, this.materials.steering_wheel);
 
