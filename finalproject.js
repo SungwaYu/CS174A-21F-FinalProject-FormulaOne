@@ -60,10 +60,17 @@ export class FinalProject_Base extends Scene {
             'torus' : new defs.Torus(5, 15),
             "car": new Shape_From_File("assets/car.obj"),
             "square": new Square(),
+            "text": new Text_Line(38),
+            "score_table": new Cube(),
         };
 
         //
         this.hold = 0;
+
+        //declare variables for score box
+        this.start = false;
+        this.end = false;
+        this.score = 0;
 
         // declare variable for 3rd person camera toggle
         this.third_person = true;
@@ -101,6 +108,7 @@ export class FinalProject_Base extends Scene {
         this.unlock_camera = false;
 
         const phong = new defs.Phong_Shader();
+        const texty = new defs.Textured_Phong(1);
         this.materials = {
             plastic: new Material(phong,
                 {ambient: .2, diffusivity: .8, specularity: .5, color: color(.9, .5, .9, 1)}),
@@ -131,6 +139,12 @@ export class FinalProject_Base extends Scene {
             sky: new Material(new defs.Textured_Phong(),
                 {ambient: .8, diffusivity: .8, specularity: .8, color: hex_color("#000000"),
                     texture: new Texture("assets/sky.jpeg", "LINEAR_MIPMAP_LINEAR")}),
+            grey: new Material(phong, 
+                {color: color(.5, .5, .5, 1), ambient: 0,
+                    diffusivity: .3, specularity: .5, smoothness: 10}),
+            text_image: new Material(texty, 
+                {ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/text.png")}),
         };
     }
 
@@ -238,6 +252,12 @@ export class FinalProject_Scene extends FinalProject_Base {
         // physics implementation, we want all our physics to be processed at 
         // the same intervals so we want to use dt to find a fixed physics framerate
         // for this demo we will process physics at 50 frames a second
+
+        if (this.start == true) {
+            if(this.end == false) {
+                score = score + dt;
+            }
+        }
 
         this.timer += dt
         if(this.timer > 20)
@@ -460,21 +480,72 @@ export class FinalProject_Scene extends FinalProject_Base {
         // attach the camera to the car, attach in first or 
         // third person depending on the this.third_person variable set
         let camera_transform = position_transform.times(Mat4.translation(0, -1, 0));
+
+        let score_transform = Mat4.identity();
+
         // set debug option to unloock camera
         if(!this.unlock_camera)
         {
-            if(!this.third_person)
+            if(!this.third_person) {
                 program_state.set_camera(Mat4.inverse(camera_transform).times(Mat4.translation(0, -2.2, -0.7)));
-            else
+                score_transform = camera_transform.times(Mat4.translation(0, 5.2, -12.7)).times(Mat4.scale(1, 1, 0.01));
+            }
+            else {
                 program_state.set_camera(Mat4.inverse(camera_transform
                     .times(Mat4.rotation(-Math.PI * .1 * this.camera_position, 0, 1, 0))
                     .times(Mat4.rotation(-Math.PI * .05, 1, 0, 0))
                     .times(Mat4.translation(0, 2, 10))));
+            }
         }
         // map camera review
         if(this.map_camera){
             program_state.set_camera(Mat4.identity().times(Mat4.rotation(Math.PI/2.0 , 1, 0, 0)).times(Mat4.translation(0, -200, 20)));
         }
+        
+        if(this.third_person) {
+            score_transform = camera_transform.times(Mat4.translation(0, 5, -2)).times(Mat4.scale(1, 1, 0.1));
+        }
+        
+        //create score box
+        this.shapes.score_table.draw(context, program_state, score_transform, this.materials.grey);
+        
+        var hold_score = this.score.toFixed(2);
+        var n = hold_score.toString();
+        let strings = ["Score = " + "n"];
+
+        //strings for score box
+        if (this.start == false) {
+            if(this.end == false){
+                let strings = ["Score = " + "n"];
+            }
+        }
+        else if (this.start == true) {
+            if (this.end == false) {
+                let strings = ["Score = " + "n"];
+            }
+            else if (this.end == true) {
+                let strings = ["Congrats, you win!", "Final Score = " + "n"];
+            }
+        }
+
+        
+
+
+//         for (let i = 0; i < 3; i++)
+//             for (let j = 0; j < 2; j++) {             // Find the matrix for a basis located along one of the cube's sides:
+//                 let cube_side = Mat4.rotation(i == 0 ? Math.PI / 2 : 0, 1, 0, 0)
+//                     .times(Mat4.rotation(Math.PI * j - (i == 1 ? Math.PI / 2 : 0), 0, 1, 0))
+//                     .times(Mat4.translation(-.9, .9, 1.01));
+
+//                 const multi_line_string = strings[2 * i + j].split('\n');
+//                 // Draw a Text_String for every line in our string, up to 30 lines:
+//                 for (let line of multi_line_string.slice(0, 30)) {             // Assign the string to Text_String, and then draw it.
+//                     this.shapes.text.set_string(line, context.context);
+//                     this.shapes.text.draw(context, program_state, score_transform.times(cube_side).times(Mat4.scale(.03, .03, .03)), this.text_image);
+//                     // Move our basis down a line.
+//                     cube_side.post_multiply(Mat4.translation(0, -.06, 0));
+//                 }
+//             }
 
     }
 }
@@ -836,7 +907,57 @@ class Game_Info extends FinalProject_Base{
         this.new_line();
         this.live_string(box => {
             box.textContent = "Can add the timer here if other methods not work.\n" +
-                "I'm also thinking if we can separation the car's information here like the position, speed, etc"
+                "I'm also thinking if we can separation the car's information here like the position, speed, etc."
         });
+        this.new_line();
+        this.key_triggered_button("Start Race", ["g"], () => this.start = true)
+        this.new_line();
+        this.key_triggered_button("End Race", ["h"], () => this.end = true)
+        this.new_line();
+    }
+}
+
+
+
+
+export class Text_Line extends Shape {                           // **Text_Line** embeds text in the 3D world, using a crude texture
+                                                                 // method.  This Shape is made of a horizontal arrangement of quads.
+                                                                 // Each is textured over with images of ASCII characters, spelling
+                                                                 // out a string.  Usage:  Instantiate the Shape with the desired
+                                                                 // character line width.  Then assign it a single-line string by calling
+                                                                 // set_string("your string") on it. Draw the shape on a material
+                                                                 // with full ambient weight, and text.png assigned as its texture
+                                                                 // file.  For multi-line strings, repeat this process and draw with
+                                                                 // a different matrix.
+    constructor(max_size) {
+        super("position", "normal", "texture_coord");
+        this.max_size = max_size;
+        var object_transform = Mat4.identity();
+        for (var i = 0; i < max_size; i++) {                                       // Each quad is a separate Square instance:
+            defs.Square.insert_transformed_copy_into(this, [], object_transform);
+            object_transform.post_multiply(Mat4.translation(1.5, 0, 0));
+        }
+    }
+
+    set_string(line, context) {           // set_string():  Call this to overwrite the texture coordinates buffer with new
+        // values per quad, which enclose each of the string's characters.
+        this.arrays.texture_coord = [];
+        for (var i = 0; i < this.max_size; i++) {
+            var row = Math.floor((i < line.length ? line.charCodeAt(i) : ' '.charCodeAt()) / 16),
+                col = Math.floor((i < line.length ? line.charCodeAt(i) : ' '.charCodeAt()) % 16);
+
+            var skip = 3, size = 32, sizefloor = size - skip;
+            var dim = size * 16,
+                left = (col * size + skip) / dim, top = (row * size + skip) / dim,
+                right = (col * size + sizefloor) / dim, bottom = (row * size + sizefloor + 5) / dim;
+
+            this.arrays.texture_coord.push(...Vector.cast([left, 1 - bottom], [right, 1 - bottom],
+                [left, 1 - top], [right, 1 - top]));
+        }
+        if (!this.existing) {
+            this.copy_onto_graphics_card(context);
+            this.existing = true;
+        } else
+            this.copy_onto_graphics_card(context, ["texture_coord"], false);
     }
 }
