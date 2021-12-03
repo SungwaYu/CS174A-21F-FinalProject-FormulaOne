@@ -101,6 +101,10 @@ export class FinalProject_Base extends Scene {
         this.rotation_velocity = Math.PI/120;
         this.pos_trans = Mat4.identity().times(Mat4.translation(0, 1, 0));
 
+        // collision
+        this.edge = false;
+
+
         document.addEventListener("keydown", this.key_down_handler.bind(this));
         document.addEventListener("keyup", this.key_up_handler.bind(this));
 
@@ -260,10 +264,10 @@ export class FinalProject_Scene extends FinalProject_Base {
         }
 
         this.timer += dt
-        if(this.timer > 20)
+        if(this.timer > 10)
         {
             // process physics within here so physics is processed in fixed intervals
-            this.timer -= 20
+            this.timer -= 10
             // apply forward acceleration
             if(this.forward)
             {
@@ -338,7 +342,8 @@ export class FinalProject_Scene extends FinalProject_Base {
             this.camera_position += this.camera_velocity;
 
 
-            // physics for TrackC
+            // ------ physics for TrackC ----------
+
             // gravity
             if(this.pos_trans[1][3]>1){
                 this.pos_trans[1][3] += this.gravity;
@@ -348,25 +353,56 @@ export class FinalProject_Scene extends FinalProject_Base {
                 this.pos_trans[2][3]<=-60 &&
                 this.pos_trans[0][3]>=-40 &&
                 this.pos_trans[0][3]<=0){
-                // increase y
-                this.pos_trans[1][3] = 6 - 5.0/-40.0 * this.pos_trans[0][3];
-                // rotate car
-                // this.pos_trans[0][0] = 1;
-                // this.pos_trans[1][1] = 1;
-                // this.pos_trans[2][2] = 1;
-                // //.times(Mat4.rotation(Math.PI/10.0,0,0,1)).times(Mat4.rotation(-Math.PI/2.0,0,1,0))
+                if(!this.edge) {
+                    // increase y
+                    this.pos_trans[1][3] = 6 - 5.0 / -40.0 * this.pos_trans[0][3];
+                    // rotate car
+                    // this.pos_trans[0][0] = 1;
+                    // this.pos_trans[1][1] = 1;
+                    // this.pos_trans[2][2] = 1;
+                    // //.times(Mat4.rotation(Math.PI/10.0,0,0,1)).times(Mat4.rotation(-Math.PI/2.0,0,1,0))
+                }else{
+                    this.velocity = -.5;
+                }
             }
             // on top
             else if(this.pos_trans[2][3]>=-70 &&
                 this.pos_trans[2][3]<=-60 &&
                 this.pos_trans[0][3]>=0 &&
                 this.pos_trans[0][3]<=20){
-                // increase y
-                this.pos_trans[1][3] = 6;
+                if(!this.edge) {
+                    // increase y
+                    this.pos_trans[1][3] = 6;
+                }else{
+                    this.velocity = -.5;
+                }
             }
             // ground
             else {
             }
+
+            // check edge
+            if((this.pos_trans[0][3]>=-50 &&
+                this.pos_trans[0][3]<=30 &&
+                this.pos_trans[2][3]<=-50 &&
+                this.pos_trans[2][3]>=-60)||
+                (this.pos_trans[0][3]>=-50 &&
+                this.pos_trans[0][3]<=30 &&
+                this.pos_trans[2][3]<=-70 &&
+                this.pos_trans[2][3]>=-80)||
+                (this.pos_trans[0][3]>=20 &&
+                this.pos_trans[0][3]<=30 &&
+                this.pos_trans[2][3]<=-50 &&
+                this.pos_trans[2][3]>=-80))
+            {
+                this.edge = true;
+            }
+            else{
+                this.edge = false;
+            }
+
+            // ------------------------------------
+
 
             /*
             // maximum camera_position: 1.5 TODO: bug - velocity still increasing
@@ -492,7 +528,6 @@ export class FinalProject_Scene extends FinalProject_Base {
             }
             else {
                 program_state.set_camera(Mat4.inverse(camera_transform
-                    .times(Mat4.rotation(-Math.PI * .1 * this.camera_position, 0, 1, 0))
                     .times(Mat4.rotation(-Math.PI * .05, 1, 0, 0))
                     .times(Mat4.translation(0, 2, 10))));
             }
@@ -869,7 +904,11 @@ class TrackC extends Shape {
             [-30,0,0],
             [-30,0,-10],
             [-50,0,-10],
-            [-50,0,0]
+            [-50,0,0],
+            [10,0,-10],  // 8
+            [30,0,-10],  // 9
+            [30,0,0],  // 10
+            [10,0,0],  //11
         );
         this.arrays.normal = Vector3.cast(
             [0,1,0],
@@ -879,7 +918,11 @@ class TrackC extends Shape {
             [0,1,0],
             [0,1,0],
             [0,1,0],
-            [0,1,0]
+            [0,1,0],
+            [0,0,1],
+            [0,0,1],
+            [0,0,1],
+            [0,0,1],
         );
         this.arrays.texture_coord = Vector.cast(
             [0, 0],
@@ -889,7 +932,11 @@ class TrackC extends Shape {
             [0, 0],
             [1, 0],
             [0, 1],
-            [1, 1]
+            [1, 1],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
         );
         this.indices.push(
             1,0,2,
@@ -897,7 +944,15 @@ class TrackC extends Shape {
             3,0,4,
             4,3,5,
             5,4,6,
-            4,6,7
+            4,6,7,
+            5,8,3,
+            8,3,9,
+            3,9,2,
+            9,2,1,
+            1,9,10,
+            10,1,11,
+            1,11,0,
+            11,0,4,
         )
     }
 }
