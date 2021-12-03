@@ -78,6 +78,9 @@ export class FinalProject_Base extends Scene {
         this.camera_velocity = 0;
         this.camera_position = 0;
 
+        // check on track
+        this.is_on_track = true;
+
         // declare movement variables
         this.forward = false;
         this.backward = false;
@@ -85,18 +88,17 @@ export class FinalProject_Base extends Scene {
         this.right = false;
         this.acceleration = 0.01;
         this.gravity = -0.2;
-        this.velocity = 0;
         this.position = 0;
-        this.natural_decceleration = 0.005;
+        this.velocity = 0;
         this.timer = 0;
-        this.max_velocity = 0.8;
+        this.max_velocity = 0.6;
+        this.natural_decceleration = 0.005;
         this.rotation_displacement = 0;
         this.rotation_velocity = Math.PI/120;
         this.pos_trans = Mat4.identity().times(Mat4.translation(0, 1, 0));
 
         // collision
         this.edge = false;
-
 
         document.addEventListener("keydown", this.key_down_handler.bind(this));
         document.addEventListener("keyup", this.key_up_handler.bind(this));
@@ -178,6 +180,12 @@ export class FinalProject_Base extends Scene {
         //     this.pos_trans[3][0].toFixed(2) + "," + this.pos_trans[3][1].toFixed(2) + "," + this.pos_trans[3][2].toFixed(2) + "," + this.pos_trans[3][3].toFixed(2));
         // this.new_line();
         // this.new_line();
+        this.live_string(box => box.textContent = "- Is on track: " + this.is_on_track);
+        this.new_line();
+        this.live_string(box => box.textContent = "- max_velocity: " + this.max_velocity);
+        this.new_line()
+        this.live_string(box => box.textContent = "- natural_decceleration: " + this.natural_decceleration);
+        this.new_line()
         this.live_string(box => box.textContent = "- pos_trans_translation: " +
             this.pos_trans[0][3].toFixed(2) + "," +
             this.pos_trans[1][3].toFixed(2) + "," +
@@ -242,6 +250,15 @@ export class FinalProject_Scene extends FinalProject_Base {
         // physics implementation, we want all our physics to be processed at 
         // the same intervals so we want to use dt to find a fixed physics framerate
         // for this demo we will process physics at 50 frames a second
+
+        // adjust track, grass speed
+        if(this.is_on_track) {
+            this.max_velocity = 0.6;
+            this.natural_decceleration = 0.005;
+        }else{
+            this.max_velocity = 0.3;
+            this.natural_decceleration = 0.007;
+        }
 
         this.timer += dt
         if(this.timer > 20)
@@ -322,17 +339,21 @@ export class FinalProject_Scene extends FinalProject_Base {
             this.camera_position += this.camera_velocity;
 
 
-            // ------ physics for TrackC ----------
+            // ------ physics  ----------
 
             // gravity
             if(this.pos_trans[1][3]>1){
                 this.pos_trans[1][3] += this.gravity;
             }
-            // uphill
+
+            // check if on track
+            // trackC uphill
             if(this.pos_trans[2][3]>=-70 &&
                 this.pos_trans[2][3]<=-60 &&
                 this.pos_trans[0][3]>=-40 &&
-                this.pos_trans[0][3]<=0){
+                this.pos_trans[0][3]<=0)
+            {
+                this.is_on_track = true;
                 if(!this.edge) {
                     // increase y
                     this.pos_trans[1][3] = 6 - 5.0 / -40.0 * this.pos_trans[0][3];
@@ -345,11 +366,13 @@ export class FinalProject_Scene extends FinalProject_Base {
                     this.velocity = -.5;
                 }
             }
-            // on top
+            // trackC top
             else if(this.pos_trans[2][3]>=-70 &&
                 this.pos_trans[2][3]<=-60 &&
                 this.pos_trans[0][3]>=0 &&
-                this.pos_trans[0][3]<=20){
+                this.pos_trans[0][3]<=20)
+            {
+                this.is_on_track = true;
                 if(!this.edge) {
                     // increase y
                     this.pos_trans[1][3] = 6;
@@ -357,8 +380,58 @@ export class FinalProject_Scene extends FinalProject_Base {
                     this.velocity = -.5;
                 }
             }
-            // ground
+            // trackC bottom
+            else if(this.pos_trans[2][3]>=-70 &&
+                this.pos_trans[2][3]<=-60 &&
+                this.pos_trans[0][3]>=0 &&
+                this.pos_trans[0][3]<=20)
+            {
+                this.is_on_track = true;
+            }
+            // trackA
+            else if(this.pos_trans[2][3]>=-30 &&
+                    this.pos_trans[2][3]<=25 &&
+                    this.pos_trans[0][3]>=-50 &&
+                    this.pos_trans[0][3]<=5)
+            {
+                if((this.pos_trans[0][3]>=-40 &&
+                    this.pos_trans[0][3]<=-5 &&
+                    this.pos_trans[2][3]>=-20 &&
+                    this.pos_trans[2][3]<=15))
+                {
+                    // grass inside track A
+                    this.is_on_track = false;
+                }else {
+                    // on track
+                    this.is_on_track = true;
+                }
+            }
+            // trackB
+            else if(this.pos_trans[2][3]>=-90 &&
+                    this.pos_trans[2][3]<=40 &&
+                    this.pos_trans[0][3]>=20 &&
+                    this.pos_trans[0][3]<=75){
+                if(this.pos_trans[2][3]>=-80 &&
+                    this.pos_trans[2][3]<=-45 &&
+                    this.pos_trans[0][3]>=30 &&
+                    this.pos_trans[0][3]<=65)
+                {
+                    // top grass inside track B
+                    this.is_on_track = false;
+                }else  if(this.pos_trans[2][3]>=0 &&
+                        this.pos_trans[2][3]<=30 &&
+                        this.pos_trans[0][3]>=30 &&
+                        this.pos_trans[0][3]<=65){
+                    // bottom grass inside track B
+                    this.is_on_track = false;
+                }else{
+                    // on track
+                    this.is_on_track = true;
+                }
+            }
+            // grass
             else {
+                this.is_on_track = false;
             }
 
             // check edge
