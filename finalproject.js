@@ -83,15 +83,15 @@ export class FinalProject_Base extends Scene {
         this.backward = false;
         this.left = false;
         this.right = false;
-        this.acceleration = 0.03;
+        this.acceleration = 0.01;
         this.gravity = -0.2;
         this.velocity = 0;
         this.position = 0;
         this.natural_decceleration = 0.005;
         this.timer = 0;
-        this.max_velocity = 0.6;
+        this.max_velocity = 0.8;
         this.rotation_displacement = 0;
-        this.rotation_velocity = Math.PI/40;
+        this.rotation_velocity = Math.PI/120;
         this.pos_trans = Mat4.identity().times(Mat4.translation(0, 1, 0));
 
         document.addEventListener("keydown", this.key_down_handler.bind(this));
