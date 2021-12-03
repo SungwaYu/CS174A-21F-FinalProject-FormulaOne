@@ -52,3 +52,10 @@ Start the race by pressing "g" and go for your best time. Watch out! Driving off
 Race the track for your desired amount of laps and then press "h" to get your time. Keep racing to beat your best time and become a CS174a Formula One Racing legend!
 
 **Game Advanced Features**
+
+Physics: The game uses basic kinematics to accelerate and decelerate the car. The car also experiences friction when on a surface other than the road (grass) that slows the car down. 
+
+Collision Detection: When running into an object such as the ramp wall, the car detects it has run into an object and responds properly. 
+
+Texturing: The car is placed in a world  that is textured to resemble a grassland with mountains in the distance on a bright sunny day. Each track is textured to resemble a roadway.
+
